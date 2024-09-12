@@ -59,7 +59,7 @@ for size in record_sizes:
         max_accuracy = accuracy_nb
         model = nb_model
 
-joblib.dump(model, 'categorical_naive_bayes_model.pkl')
+joblib.dump(model, 'backend/models/categorical_naive_bayes_model.pkl')
 
 # Plot the accuracies for different record sizes
 plt.figure(figsize=(10, 6))
