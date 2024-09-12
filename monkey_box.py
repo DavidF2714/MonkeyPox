@@ -6,6 +6,7 @@ from sklearn.model_selection import train_test_split, cross_validate, KFold
 from sklearn.naive_bayes import CategoricalNB
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix, roc_curve, roc_auc_score
+import joblib
 
 # Load data
 data = pd.read_csv('processed_data.txt')
@@ -16,6 +17,12 @@ data_absent = data[data['MonkeyPox'] == 0]
 record_sizes = [120, 500, 1200]
 accuracies_lr = []
 accuracies_nb = []
+
+# trained model for api consumption
+model = None
+
+# register the maximum accuracy
+max_accuracy = 0
 
 for size in record_sizes:
     # Sample data
@@ -47,6 +54,12 @@ for size in record_sizes:
     y_pred_nb = nb_model.predict(X_test)
     accuracy_nb = accuracy_score(y_test, y_pred_nb)
     accuracies_nb.append(accuracy_nb)
+
+    if(accuracy_nb > max_accuracy):
+        max_accuracy = accuracy_nb
+        model = nb_model
+
+joblib.dump(model, 'categorical_naive_bayes_model.pkl')
 
 # Plot the accuracies for different record sizes
 plt.figure(figsize=(10, 6))
