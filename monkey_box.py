@@ -1,76 +1,145 @@
 import pandas as pd
-from sklearn.model_selection import train_test_split, cross_val_score, cross_validate, KFold, GridSearchCV
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.model_selection import train_test_split, cross_validate, KFold
 from sklearn.naive_bayes import CategoricalNB
-from sklearn.metrics import accuracy_score, classification_report
-from imblearn.over_sampling import RandomOverSampler
-from keras.models import Sequential
-from keras.layers import Dense, Input
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix, roc_curve, roc_auc_score
 
 # Load data
 data = pd.read_csv('processed_data.txt')
+data_present = data[data['MonkeyPox'] == 1]
+data_absent = data[data['MonkeyPox'] == 0]
+
+# Define different sizes of training records
+record_sizes = [120, 500, 1200]
+accuracies_lr = []
+accuracies_nb = []
+
+for size in record_sizes:
+    # Sample data
+    data_present_sampled = data_present.sample(n=size//2, random_state=42)
+    data_absent_sampled = data_absent.sample(n=size//2, random_state=42)
+
+    balanced_data = pd.concat([data_present_sampled, data_absent_sampled])
+    balanced_data = balanced_data.sample(frac=1, random_state=42).reset_index(drop=True)
+
+    # Split data into X and y
+    X = balanced_data.drop('MonkeyPox', axis=1)
+    y = balanced_data['MonkeyPox']
+
+    X = np.hstack((np.ones((X.shape[0], 1)), X))
+
+    # Split data into training and testing sets
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+    # Train logistic regression model
+    logreg = LogisticRegression(max_iter=1000)
+    logreg.fit(X_train, y_train)
+    y_pred_lr = logreg.predict(X_test)
+    accuracy_lr = accuracy_score(y_test, y_pred_lr)
+    accuracies_lr.append(accuracy_lr)
+
+    # Train Naive Bayes model
+    nb_model = CategoricalNB()
+    nb_model.fit(X_train, y_train)
+    y_pred_nb = nb_model.predict(X_test)
+    accuracy_nb = accuracy_score(y_test, y_pred_nb)
+    accuracies_nb.append(accuracy_nb)
+
+# Plot the accuracies for different record sizes
+plt.figure(figsize=(10, 6))
+plt.plot(record_sizes, accuracies_lr, marker='o', label='Logistic Regression')
+plt.plot(record_sizes, accuracies_nb, marker='o', label='Naive Bayes')
+plt.title('Accuracy vs. Number of Training Records')
+plt.xlabel('Number of Training Records')
+plt.ylabel('Accuracy')
+plt.legend()
+plt.grid(True)
+plt.show()
+
+# Use the dataset with 120 records for confusion matrix, classification report, and ROC AUC
+size = 120
+data_present_sampled = data_present.sample(n=size//2, random_state=42)
+data_absent_sampled = data_absent.sample(n=size//2, random_state=42)
+
+balanced_data = pd.concat([data_present_sampled, data_absent_sampled])
+balanced_data = balanced_data.sample(frac=1, random_state=42).reset_index(drop=True)
 
 # Split data into X and y
-X = data.drop('MonkeyPox', axis=1)
-y = data['MonkeyPox']
+X = balanced_data.drop('MonkeyPox', axis=1)
+y = balanced_data['MonkeyPox']
 
-# Convert to int
-X = X.astype('int')
-y = y.astype('int')
-
-# Over-sampling
-ros = RandomOverSampler()
-X_resampled, y_resampled = ros.fit_resample(X, y)
+X = np.hstack((np.ones((X.shape[0], 1)), X))
 
 # Split data into training and testing sets
-X_train, X_test, y_train, y_test = train_test_split(X_resampled, y_resampled, test_size=0.3, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-# Define the parameter grid
-param_grid = {
-    'alpha': [0.1, 0.5, 1.0, 2.0, 5.0],
-    'fit_prior': [True, False],
-}
+# Train models
+logreg = LogisticRegression(max_iter=1000)
+nb_model = CategoricalNB()
 
-# Perform grid search
-grid_search = GridSearchCV(CategoricalNB(), param_grid, cv=5, scoring='accuracy')
-grid_search.fit(X_train, y_train)
+logreg.fit(X_train, y_train)
+nb_model.fit(X_train, y_train)
 
-# Get the best model
-best_model = grid_search.best_estimator_
-best_model.fit(X_train, y_train)
+# Predictions
+y_pred_lr = logreg.predict(X_test)
+y_pred_nb = nb_model.predict(X_test)
 
-# Backpropagation Neural Network and Feedforward Neural Network
-model = Sequential()
-model.add(Input(shape=(X_train.shape[1],)))
-model.add(Dense(64, activation='relu'))
-model.add(Dense(32, activation='relu'))
-model.add(Dense(16, activation='relu'))
-model.add(Dense(1, activation='sigmoid'))
+# Confusion matrices
+confusion_matrix_lr = confusion_matrix(y_test, y_pred_lr)
+confusion_matrix_nb = confusion_matrix(y_test, y_pred_nb)
 
-model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+# Calculate accuracy for the dataset with 120 records
+accuracy_lr_120 = accuracy_score(y_test, y_pred_lr)
+accuracy_nb_120 = accuracy_score(y_test, y_pred_nb)
 
-model.fit(X_train, y_train, epochs=100, batch_size=200, verbose=0, validation_data=(X_test, y_test))
+# Print accuracy
+print(f'Accuracy LR (120 records): {accuracy_lr_120}')
+print(f'Accuracy NB (120 records): {accuracy_nb_120}')
 
-y_pred_prob = model.predict(X_test)
-y_pred_cnn = (y_pred_prob > 0.5).astype('int')
+# Classification report
+print("Classification Report NB:")
+print(classification_report(y_test, y_pred_nb))
+print("Classification Report LR:")
+print(classification_report(y_test, y_pred_lr))
 
-# Evaluate the model using cross-validation
-kfold=KFold(n_splits=5, random_state=42, shuffle=True)
-scores = cross_val_score(best_model, X_train, y_train, cv=kfold)
-scoring = ['accuracy', 'precision_macro', 'recall_macro', 'f1_macro']
+# Plot confusion matrices side by side
+fig, axes = plt.subplots(1, 2, figsize=(20, 7))
 
-results = cross_validate(best_model, X_train, y_train, cv=kfold, scoring=scoring, return_train_score=False)
+sns.heatmap(confusion_matrix_lr, annot=True, fmt='d', ax=axes[0], cmap='Blues')
+axes[0].set_title('Confusion Matrix LR')
+axes[0].set_xlabel('Predicted')
+axes[0].set_ylabel('Actual')
 
-print("Accuracy for each fold:", results['test_accuracy'])
-print("Precision for each fold:", results['test_precision_macro'])
-print("Recall for each fold:", results['test_recall_macro'])
-print("F1 Score for each fold:", results['test_f1_macro'])
+sns.heatmap(confusion_matrix_nb, annot=True, fmt='d', ax=axes[1], cmap='Blues')
+axes[1].set_title('Confusion Matrix NB')
+axes[1].set_xlabel('Predicted')
+axes[1].set_ylabel('Actual')
 
-y_pred = best_model.predict(X_test)
+plt.show()
 
-accuracy = accuracy_score(y_test, y_pred_cnn)
-accuracy_nb = accuracy_score(y_test, y_pred)
+# Calculate ROC AUC for both models
+y_prob_lr = logreg.predict_proba(X_test)[:, 1]
+y_prob_nb = nb_model.predict_proba(X_test)[:, 1]
 
-print(f'Accuracy: {accuracy}')
-print(classification_report(y_test, y_pred_cnn))
-print(classification_report(y_test, y_pred))
+fpr_lr, tpr_lr, _ = roc_curve(y_test, y_prob_lr)
+fpr_nb, tpr_nb, _ = roc_curve(y_test, y_prob_nb)
 
+roc_auc_lr = roc_auc_score(y_test, y_prob_lr)
+roc_auc_nb = roc_auc_score(y_test, y_prob_nb)
+
+# Plot ROC curves
+plt.figure(figsize=(10, 6))
+plt.plot(fpr_lr, tpr_lr, label=f'Logistic Regression (AUC = {roc_auc_lr:.2f})')
+plt.plot(fpr_nb, tpr_nb, label=f'Naive Bayes (AUC = {roc_auc_nb:.2f})')
+plt.plot([0, 1], [0, 1], 'k--')
+plt.xlim([0.0, 1.0])
+plt.ylim([0.0, 1.05])
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+plt.title('ROC Curve')
+plt.legend(loc='lower right')
+plt.grid(True)
+plt.show()
