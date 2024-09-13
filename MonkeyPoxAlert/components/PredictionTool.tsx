@@ -1,15 +1,14 @@
 "use client";
 import React, { useState } from 'react';
-import Image from 'next/image';
-import { Container, Typography, FormControl, FormControlLabel, Radio, RadioGroup, Button, Paper } from '@mui/material';
 import Divider from '@mui/material/Divider';
 import Stack from '@mui/material/Stack';
 import { Snackbar } from '@mui/material';
-import MuiAlert from '@mui/material/Alert';
+import MuiAlert, { AlertProps, AlertColor } from '@mui/material/Alert';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
-const Alert = React.forwardRef(function Alert(props, ref) {
+// Explicitly specify the ref type as HTMLDivElement
+const Alert = React.forwardRef<HTMLDivElement, AlertProps>(function Alert(props, ref) {
   return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
 });
 
@@ -28,11 +27,11 @@ const PredictionTool = () => {
 
   const [openSnackbar, setOpenSnackbar] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
-  const [snackbarSeverity, setSnackbarSeverity] = useState('info');
+  const [snackbarSeverity, setSnackbarSeverity] = React.useState<AlertColor | undefined>(undefined);
 
 
   // Handle change in radio buttons
-  const handleChange = (event) => {
+  const handleChange = (event:React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
     setFormData((prevState) => ({
       ...prevState,
@@ -41,7 +40,7 @@ const PredictionTool = () => {
   };
 
 
-  const handleSubmit = async (event) => {
+  const handleSubmit = async (event:React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     // Generate the features array
