@@ -2,9 +2,13 @@ from flask import Flask, request, jsonify
 import joblib
 import json
 import numpy as np
+from flask_cors import CORS  # Import CORS
+
 
 # Initialize the Flask app
 app = Flask(__name__)
+
+CORS(app)  # Enable CORS for all routes
 
 # Load the trained Naive Bayes model
 model = joblib.load('models/categorical_naive_bayes_model.pkl')

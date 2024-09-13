@@ -29,21 +29,28 @@ export default function Header() {
             <ul className="flex grow justify-end flex-wrap items-center">
               <li>
                 <Link
-                  href="/About"
+                  href="#About"
                   className="font-medium hover:text-gray-500 px-4 py-3 flex items-center transition duration-150 ease-in-out"
                 >
                   About
                 </Link>
               </li>
               <li>
-                <Link href="/Overview" 
+                <Link href="#Overview" 
                   className="font-medium hover:text-gray-500 px-4 py-3 flex items-center transition duration-150 ease-in-out"
                   >
                   Mpox Overview
                 </Link>
               </li>
               <li>
-                <Link href="/predTool" 
+                <Link href="#Symptoms" 
+                  className="font-medium hover:text-gray-500 px-4 py-3 flex items-center transition duration-150 ease-in-out"
+                  >
+                  Symptoms
+                </Link>
+              </li>
+              <li>
+                <Link href="#predictionTool" 
                   className="font-medium hover:text-gray-500 px-4 py-3 flex items-center transition duration-150 ease-in-out"
                   >
                   Prediction Tool
