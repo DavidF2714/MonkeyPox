@@ -1,22 +1,22 @@
 export const metadata = {
-  title: 'Home - Open PRO',
-  description: 'Page description',
+  title: 'MonkeyPoxAlert',
+  description: 'mpox predictor',
 }
 
-import Hero from '@/components/hero'
-import Features from '@/components/features'
-import Newsletter from '@/components/newsletter'
-import Zigzag from '@/components/zigzag'
-import Testimonials from '@/components/testimonials'
+import MainHeader from '@/components/MainHeader'
+import About from '@/components/About'
+import PredictionTool from '@/components/PredictionTool'
+import Symptoms from '@/components/Symptoms'
+import Overview from '@/components/Overview'
 
 export default function Home() {
   return (
     <>
-      <Hero />
-      <Features />
-      <Testimonials />
-      <Zigzag />
-      <Newsletter />
+      <MainHeader />
+      <About />
+      <Overview />
+      <Symptoms />
+      <PredictionTool />
     </>
   )
 }
