@@ -7,6 +7,8 @@ import Stack from '@mui/material/Stack';
 import { Snackbar } from '@mui/material';
 import MuiAlert from '@mui/material/Alert';
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+
 const Alert = React.forwardRef(function Alert(props, ref) {
   return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
 });
@@ -66,7 +68,7 @@ const PredictionTool = () => {
     console.log("Request body: ", requestBody.features);
 
     try {
-      const response = await fetch('http://127.0.0.1:5000/predict', {
+      const response = await fetch(`${API_BASE_URL}/predict`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
